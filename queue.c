@@ -1,4 +1,4 @@
-//SSOO-P3 23/24
+// queue.c
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,20 +6,20 @@
 #include <string.h>
 #include "queue.h"
 
-//To create a queue
-queue* queue_init(int  num_elements)
-{
-  queue * q = (queue *)malloc(sizeof(queue));
+// To create a queue
+queue* queue_init(int num_elements) {
+    queue *q = (queue *)malloc(sizeof(queue));
 
     if (q == NULL) {
         // in the case it fails
         return NULL;
     }
 
+    q->cap = num_elements; // Set the capacity of the queue
     q->size = 0;
     q->array = (struct element *)malloc(num_elements * sizeof(struct element));
 
-  if (q->array == NULL) {
+    if (q->array == NULL) {
         // in the case of mem alloc fails
         free(q); // free any mem
         return NULL;
@@ -28,46 +28,54 @@ queue* queue_init(int  num_elements)
     q->head = 0;       // Initialize the front index
     q->tail = -1;       // Initialize the rear index to -1 (no elements)
 
-  return q;
+    return q;
 }
-
 
 // To Enqueue an element
-int queue_put(queue *q, struct element* x)
-{
-  
-  
-  return 0;
-}
+int queue_put(queue *q, struct element *x) {
+    if (queue_full(q)) {
+        return -1; // Queue is full
+    }
 
+    // Increment tail index and wrap around if necessary
+    q->tail = (q->tail + 1) % q->cap;
+    q->array[q->tail] = *x;
+    q->size++;
+
+    return 0; // Success
+}
 
 // To Dequeue an element.
-struct element* queue_get(queue *q)
-{
-  struct element* element;
-  
-  return element;
+struct element* queue_get(queue *q) {
+    if (queue_empty(q)) {
+        return NULL; // Queue is empty
+    }
+
+    struct element *element = &(q->array[q->head]);
+    q->head = (q->head + 1) % q->cap;
+    q->size--;
+
+    return element;
 }
 
-
-
-
-//To check queue state
-int queue_empty(queue *q)
-{
-  
-  return 0;
+// To check if the queue is empty
+int queue_empty(queue *q) {
+    return (q->size == 0);
 }
 
-int queue_full(queue *q)
-{
-  
-  return q->size
+// To check if the queue is full
+int queue_full(queue *q) {
+    return (q->size == q->cap);
 }
 
-//To destroy the queue and free the resources
-int queue_destroy(queue *q)
-{
+// To destroy the queue and free the resources
+int queue_destroy(queue *q) {
+    if (q == NULL) {
+        return -1; // Queue is already destroyed
+    }
 
-  return 0;
+    free(q->array);
+    free(q);
+    return 0;
 }
+
