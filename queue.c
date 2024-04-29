@@ -62,7 +62,7 @@ int queue_empty(queue *q)
 int queue_full(queue *q)
 {
   
-  return q->size
+  return q->size;
 }
 
 //To destroy the queue and free the resources
