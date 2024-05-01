@@ -61,7 +61,7 @@ int queue_put(queue *q, struct element *x) {
     q->array[q->tail] = *x;
     q->size++;
 
-    // signal the queue is not empty
+    // signal the queue for consumer thread, queue is not empty and you may take from it
     pthread_cond_signal(&q->not_empty);
 
     // unlock the mutex
@@ -72,13 +72,22 @@ int queue_put(queue *q, struct element *x) {
 
 // To Dequeue an element.
 struct element* queue_get(queue *q) {
-    if (queue_empty(q)) {
-        return NULL; // Queue is empty
+    pthread_mutex_lock(&q->mutex); // lock the mutex, q is being added to
+
+    while (queue_empty(q)) {
+        // waiting until elems are adds, the not empty signal
+        pthread_cond_wait(&q->not_empty, &q->mutex);
     }
 
     struct element *element = &(q->array[q->head]);
     q->head = (q->head + 1) % q->cap;
     q->size--;
+
+    // signal the queue for the producer thread, there is space to add new products
+    pthread_cond_signal(&q->not_full);
+
+     // unlock the mutex
+    pthread_mutex_unlock(&q->mutex);
 
     return element;
 }
