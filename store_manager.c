@@ -57,18 +57,19 @@ void *consumer_thread(void *args) {
     int end_proc_cons = arguments->end_proc_cons;
     int *product_stock = arguments->product_stock;
     int *profits = arguments->profits; // Get the pointer to the profits variable
-    int product_profit [5] = {1,5,5,15,25};
+    int product_cost [5] = {2,5,15,25,100};
+    int sale_price [5] = {3,10,20,40,125};
 
     for (int i = start_proc_cons; i < end_proc_cons; i++) {
         queue_get(q);
 
         if (strcmp(operations[i].op, "PURCHASE") == 0) {
             product_stock[(operations[i].product_id) - 1] += operations[i].units;
+            *profits -= ((product_cost[(operations[i].product_id) - 1]) * operations[i].units);
         }
         else if (strcmp(operations[i].op, "SALE") == 0) {
             product_stock[(operations[i].product_id) - 1] -= operations[i].units;
-
-            *profits += ((product_profit[(operations[i].product_id) - 1]) * operations[i].units);
+            *profits += ((sale_price[(operations[i].product_id) - 1]) * operations[i].units);
             // printf("%ls", profits);
         }
     }
