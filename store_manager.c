@@ -57,16 +57,28 @@ void *consumer_thread(void *args) {
     int end_proc_cons = arguments->end_proc_cons;
     int *product_stock = arguments->product_stock;
 
+    // for (int i = start_proc_cons; i < end_proc_cons; i++) {
+    //     queue_get(q);
+    //     if (strcmp(operations[i].op, "PURCHASE") == 0 && operations[i].product_id == 1) {
+    //         product_stock[1] += operations[i].units;
+    //     }
+    //     else if (strcmp(operations[i].op, "SALE") == 0 && operations[i].product_id == 1) {
+    //         product_stock[1] -= operations[i].units;
+    //     }
+    // }
+    
     for (int i = start_proc_cons; i < end_proc_cons; i++) {
         queue_get(q);
-        if (strcmp(operations[i].op, "PURCHASE") == 0 && operations[i].product_id == 1) {
-            product_stock[1] += operations[i].units;
+
+        if (strcmp(operations[i].op, "PURCHASE") == 0) {
+            product_stock[(operations[i].product_id) - 1] += operations[i].units;
         }
-        else if (strcmp(operations[i].op, "SALE") == 0 && operations[i].product_id == 1) {
-            product_stock[1] -= operations[i].units;
+        else if (strcmp(operations[i].op, "SALE") == 0) {
+            product_stock[(operations[i].product_id) - 1] -= operations[i].units;
         }
     }
-    
+
+
     return NULL;
 }
 
@@ -200,11 +212,12 @@ int main (int argc, const char * argv[])
     // Output
     // printf("Total: %d euros\n", profits);
     printf("Stock:\n");
-    // printf("  Product 1: %d\n", product_stock[0]);
+    printf("  Product 1: %d\n", product_stock[0]);
     printf("  Product 2: %d\n", product_stock[1]);
-    // printf("  Product 3: %d\n", product_stock[2]);
-    // printf("  Product 4: %d\n", product_stock[3]);
-    // printf("  Product 5: %d\n", product_stock[4]);
+    printf("  Product 3: %d\n", product_stock[2]);
+    printf("  Product 4: %d\n", product_stock[3]);
+    printf("  Product 5: %d\n", product_stock[4]);
+    // printf("  Product 6: %d\n", product_stock[5]);
 
     return 0;
 }
