@@ -30,6 +30,7 @@ typedef struct {
     int start_proc_cons;
     int end_proc_cons;
     int *product_stock;
+    int *profits;
 } ThreadArgs;
 
 
@@ -42,7 +43,6 @@ void *producer_thread(void *args) {
     int end_proc_prod = arguments->end_proc_prod;
 
     for (int i = start_proc_prod; i < end_proc_prod; i++) {
-        // if (&operations[i].op ==   ) 
         queue_put(q, &operations[i]);
     }
     
@@ -56,17 +56,9 @@ void *consumer_thread(void *args) {
     int start_proc_cons = arguments->start_proc_cons;
     int end_proc_cons = arguments->end_proc_cons;
     int *product_stock = arguments->product_stock;
+    int *profits = arguments->profits; // Get the pointer to the profits variable
+    int product_profit [5] = {1,5,5,15,25};
 
-    // for (int i = start_proc_cons; i < end_proc_cons; i++) {
-    //     queue_get(q);
-    //     if (strcmp(operations[i].op, "PURCHASE") == 0 && operations[i].product_id == 1) {
-    //         product_stock[1] += operations[i].units;
-    //     }
-    //     else if (strcmp(operations[i].op, "SALE") == 0 && operations[i].product_id == 1) {
-    //         product_stock[1] -= operations[i].units;
-    //     }
-    // }
-    
     for (int i = start_proc_cons; i < end_proc_cons; i++) {
         queue_get(q);
 
@@ -75,9 +67,11 @@ void *consumer_thread(void *args) {
         }
         else if (strcmp(operations[i].op, "SALE") == 0) {
             product_stock[(operations[i].product_id) - 1] -= operations[i].units;
+
+            *profits += ((product_profit[(operations[i].product_id) - 1]) * operations[i].units);
+            // printf("%ls", profits);
         }
     }
-
 
     return NULL;
 }
@@ -87,9 +81,11 @@ void *consumer_thread(void *args) {
 
 int main (int argc, const char * argv[])
 {
-    // int profits = 0;
+    int profits = 0;
     int product_stock [5] = {0,0,0,0,0};
-    // int product_profit [5] = {1,5,5,15,25};
+
+    // Create ThreadArgs struct for consumer thread
+        
 
     if (argc != 5) {
         fprintf(stderr, "Usage: %s <file name> <num producers> <num consumers> <buff size>\n", argv[0]);
@@ -191,6 +187,7 @@ int main (int argc, const char * argv[])
         ThreadArgs args = {q, operations, 0, 0, start_idx, end_idx}; 
         consumer_args[i] = args;
         consumer_args[i].product_stock = product_stock; // Pass a pointer to product_stock
+        consumer_args[i].profits = &profits; // Pass the address of profits
 
         pthread_create(&consumer_threads[i], NULL, consumer_thread, (void *)&consumer_args[i]);
     }
@@ -207,17 +204,18 @@ int main (int argc, const char * argv[])
     }
 
 
+    // pthread_exit to ensure main thread waits for all other threads to finish
     
 
     // Output
-    // printf("Total: %d euros\n", profits);
+    printf("Total: %d euros\n", profits);
     printf("Stock:\n");
     printf("  Product 1: %d\n", product_stock[0]);
     printf("  Product 2: %d\n", product_stock[1]);
     printf("  Product 3: %d\n", product_stock[2]);
     printf("  Product 4: %d\n", product_stock[3]);
     printf("  Product 5: %d\n", product_stock[4]);
-    // printf("  Product 6: %d\n", product_stock[5]);
 
+    pthread_exit(NULL);
     return 0;
 }
