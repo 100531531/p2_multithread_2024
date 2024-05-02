@@ -21,6 +21,10 @@
 //     int units;
 // } Operation;
 
+// Define mutex locks for product_stock and profits
+pthread_mutex_t product_stock_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t profits_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 // put the producer args in a struct to reduce complexity
 typedef struct {
     queue *q;
@@ -64,12 +68,20 @@ void *consumer_thread(void *args) {
         queue_get(q);
 
         if (strcmp(operations[i].op, "PURCHASE") == 0) {
+            pthread_mutex_lock(&product_stock_mutex);
             product_stock[(operations[i].product_id) - 1] += operations[i].units;
+            pthread_mutex_unlock(&product_stock_mutex);
+            pthread_mutex_lock(&profits_mutex);
             *profits -= ((product_cost[(operations[i].product_id) - 1]) * operations[i].units);
+            pthread_mutex_unlock(&profits_mutex);
         }
         else if (strcmp(operations[i].op, "SALE") == 0) {
+            pthread_mutex_lock(&product_stock_mutex);
             product_stock[(operations[i].product_id) - 1] -= operations[i].units;
+            pthread_mutex_unlock(&product_stock_mutex);
+            pthread_mutex_lock(&profits_mutex);
             *profits += ((sale_price[(operations[i].product_id) - 1]) * operations[i].units);
+            pthread_mutex_unlock(&profits_mutex);
             // printf("%ls", profits);
         }
     }
