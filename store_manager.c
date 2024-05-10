@@ -12,12 +12,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-
-
 // Define mutex locks for product_stock and profits
 pthread_mutex_t product_stock_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t profits_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 
 // put the producer args in a struct to reduce complexity
 typedef struct {
