@@ -4,6 +4,8 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
+
+// Structure representing an operation element
 typedef struct element {
     int product_id; // Product identifier
     int op;         // Operation
