@@ -6,7 +6,7 @@
 
 typedef struct element {
     int product_id; // Product identifier
-    char op[9];         // Operation
+    int op;         // Operation
     int units;      // Product units
 } element;
 
