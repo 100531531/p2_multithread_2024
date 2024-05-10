@@ -14,31 +14,32 @@
 
 
 
-// struct for the operation data thats in the ARRAY
-// typedef struct Operation {
-//     int product_id;
-//     char operation_type[9]; // PURCHASE or SALE
-//     int units;
-// } Operation;
-
 // Define mutex locks for product_stock and profits
 pthread_mutex_t product_stock_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t profits_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+
 // put the producer args in a struct to reduce complexity
 typedef struct {
-    queue *q;
-    element *operations;
-    int start_proc_prod;
-    int end_proc_prod;
-    int start_proc_cons;
-    int end_proc_cons;
-    int *product_stock;
-    int *profits;
+    queue *q;               // Pointer to the shared queue
+    element *operations;    // Pointer to the array of operations
+    int start_proc_prod;    // Start index for the producer thread
+    int end_proc_prod;      // End index for the producer thread
+    int start_proc_cons;    // Start index for the consumer thread
+    int end_proc_cons;      // End index for the consumer thread
+    int *product_stock;     // Pointer to the array of product stock
+    int *profits;           // Pointer to the array of profits
 } ThreadArgs;
 
 
-// the func exec by each 
+/**
+ * This function is executed by each producer thread.
+ * It puts elements into the queue.
+ *
+ * @param args The arguments passed to the function.
+ *             Should be a pointer to a ThreadArgs struct.
+ * @return Always returns NULL.
+ */
 void *producer_thread(void *args) {
     ThreadArgs *arguments = (ThreadArgs *)args;
     queue *q = arguments->q;
@@ -53,6 +54,14 @@ void *producer_thread(void *args) {
     return NULL;
 }
 
+/**
+ * This function is executed by each consumer thread.
+ * It retrieves elements from the queue and processes them.
+ *
+ * @param args The arguments passed to the function.
+ *             Should be a pointer to a ThreadArgs struct.
+ * @return Always returns NULL.
+ */
 void *consumer_thread(void *args) {
     ThreadArgs *arguments = (ThreadArgs *)args;
     queue *q = arguments->q;
@@ -67,7 +76,7 @@ void *consumer_thread(void *args) {
     for (int i = start_proc_cons; i < end_proc_cons; i++) {
         queue_get(q);
 
-        if (strcmp(operations[i].op, "PURCHASE") == 0) {
+        if (operations[i].op == 0) {
             pthread_mutex_lock(&product_stock_mutex);
             product_stock[(operations[i].product_id) - 1] += operations[i].units;
             pthread_mutex_unlock(&product_stock_mutex);
@@ -75,7 +84,7 @@ void *consumer_thread(void *args) {
             *profits -= ((product_cost[(operations[i].product_id) - 1]) * operations[i].units);
             pthread_mutex_unlock(&profits_mutex);
         }
-        else if (strcmp(operations[i].op, "SALE") == 0) {
+        else if (operations[i].op == 1) {
             pthread_mutex_lock(&product_stock_mutex);
             product_stock[(operations[i].product_id) - 1] -= operations[i].units;
             pthread_mutex_unlock(&product_stock_mutex);
@@ -88,8 +97,6 @@ void *consumer_thread(void *args) {
 
     return NULL;
 }
-
-
 
 
 int main (int argc, const char * argv[])
@@ -144,19 +151,31 @@ int main (int argc, const char * argv[])
 
 
 
-    // for (int i = 0; i < num_operations; i++) {
-    //     printf("Operation %d: product_id = %d, op = %d, units = %d\n", i + 1, operations[i].product_id, operations[i].op, operations[i].units);
-    // }
-
-
     // reads the operations from file and stores them in the operations array
     for (int i = 0; i < num_operations; i++) {
-        if (fscanf(file, "%d %8s %d", &operations[i].product_id, operations[i].op, &operations[i].units) != 3) {
+
+        char op_str[9]; // Make sure to include space for the null terminator
+
+        // Read all three items from the line
+        if (fscanf(file, "%d %8s %d", &operations[i].product_id, op_str, &operations[i].units) != 3) {
             fprintf(stderr, "Error reading operation %d from file\n", i + 1);
             free(operations);
             fclose(file);
             return 1;
         }
+
+        // Convert the string to an integer
+        if (strcmp(op_str, "PURCHASE") == 0) {
+            operations[i].op = 0;
+        } else if (strcmp(op_str, "SALE") == 0) {
+            operations[i].op = 1;
+        } else {
+            fprintf(stderr, "Error: Invalid operation string '%s' for operation %d\n", op_str, i + 1);
+            free(operations);
+            fclose(file);
+            return 1;
+        }
+            
     }
 
     // each producer will do num_operations/num_producers(floor division), 
@@ -228,6 +247,9 @@ int main (int argc, const char * argv[])
     printf("  Product 3: %d\n", product_stock[2]);
     printf("  Product 4: %d\n", product_stock[3]);
     printf("  Product 5: %d\n", product_stock[4]);
+    
+    pthread_mutex_destroy(&product_stock_mutex);
+    pthread_mutex_destroy(&profits_mutex);
 
     pthread_exit(NULL);
     return 0;
